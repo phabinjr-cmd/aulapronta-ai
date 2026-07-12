@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AulaPronta AI - Planejamento Instantâneo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 py-4 px-6 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">AulaPronta AI</span>
+            </div>
+            <span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-100">Alinhado à BNCC</span>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8">
+        
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+            <h1 class="text-2xl font-bold text-slate-900 mb-2">O que você vai ensinar hoje?</h1>
+            <p class="text-slate-500 mb-6 text-sm">Digite o tema e deixe a nossa IA integrada mapear a BNCC e estruturar sua aula.</p>
+            
+            <form id="generatorForm" class="space-y-4">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <i data-lucide="book-open" class="w-5 h-5"></i>
+                        </div>
+                        <input type="text" id="topicInput" required
+                            class="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 placeholder-slate-400 text-sm shadow-sm"
+                            placeholder="Ex: Revolução Industrial, Frações Equivalentes, Ecossistemas...">
+                    </div>
+                    
+                    <div class="w-full md:w-64">
+                        <select id="gradeSelect" class="block w-full py-3 px-3 border border-slate-300 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 text-sm shadow-sm">
+                            <option value="6º ano do Ensino Fundamental">6º Ano (EF II)</option>
+                            <option value="7º ano do Ensino Fundamental">7º Ano (EF II)</option>
+                            <option value="8º ano do Ensino Fundamental">8º Ano (EF II)</option>
+                            <option value="9º ano do Ensino Fundamental">9º Ano (EF II)</option>
+                            <option value="1º ano do Ensino Médio">1º Ano (Ensino Médio)</option>
+                            <option value="2º ano do Ensino Médio">2º Ano (Ensino Médio)</option>
+                            <option value="3º ano do Ensino Médio">3º Ano (Ensino Médio)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" id="submitBtn" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                        <span>Gerar Aula Completa</span>
+                        <i data-lucide="wand-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section id="loadingState" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mb-4"></div>
+            <h3 class="text-lg font-semibold text-slate-800">A Inteligência Artificial está trabalhando...</h3>
+            <p class="text-sm text-slate-500 mt-1">Mapeando competências da BNCC, roteirizando slides e gerando atividades. Isso leva alguns segundos.</p>
+        </section>
+
+        <section id="resultSection" class="hidden space-y-6">
+            
+            <div class="border-b border-slate-200 overflow-x-auto">
+                <nav class="flex space-x-6 min-w-max" aria-label="Tabs">
+                    <button onclick="switchTab('plano')" id="tab-plano" class="border-indigo-600 text-indigo-600 border-b-2 font-medium py-4 px-1 text-sm flex items-center gap-2">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Plano de Aula
+                    </button>
+                    <button onclick="switchTab('slides')" id="tab-slides" class="border-transparent text-slate-500 border-b-2 font-medium py-4 px-1 text-sm flex items-center gap-2">
+                        <i data-lucide="presentation" class="w-4 h-4"></i> Estrutura de Slides
+                    </button>
+                    <button onclick="switchTab('atividades')" id="tab-atividades" class="border-transparent text-slate-500 border-b-2 font-medium py-4 px-1 text-sm flex items-center gap-2">
+                        <i data-lucide="pen-tool" class="w-4 h-4"></i> Atividades
+                    </button>
+                    <button onclick="switchTab('apoio')" id="tab-apoio" class="border-transparent text-slate-500 border-b-2 font-medium py-4 px-1 text-sm flex items-center gap-2">
+                        <i data-lucide="link" class="w-4 h-4"></i> Apoio Pedagógico
+                    </button>
+                </nav>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-[400px]">
+                
+                <div id="content-plano" class="tab-content space-y-6">
+                    <div>
+                        <span class="bg-emerald-50 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded border border-emerald-100 uppercase tracking-wider" id="resBnccCode">CÓDIGO BNCC</span>
+                        <h2 class="text-2xl font-bold text-slate-900 mt-2" id="resTitle">Título da Aula Gerada</h2>
+                    </div>
+                    <hr class="border-slate-100">
+                    <div>
+                        <h4 class="font-semibold text-slate-900 mb-1 flex items-center gap-2">
+                            <i data-lucide="target" class="w-4 h-4 text-indigo-500"></i> Diretriz Curricular (BNCC):
+                        </h4>
+                        <p class="text-slate-600 text-sm leading-relaxed" id="resBnccDesc">Habilidade...</p>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-4 pt-2">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <h5 class="font-bold text-xs text-indigo-600 uppercase mb-1">Conceitual (Saber)</h5>
+                            <p class="text-xs text-slate-600" id="objConceitual">Objetivo...</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <h5 class="font-bold text-xs text-indigo-600 uppercase mb-1">Procedimental (Fazer)</h5>
+                            <p class="text-xs text-slate-600" id="objProcedimental">Objetivo...</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <h5 class="font-bold text-xs text-indigo-600 uppercase mb-1">Atitudinal (Ser)</h5>
+                            <p class="text-xs text-slate-600" id="objAtitudinal">Objetivo...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-slides" class="tab-content hidden space-y-4">
+                    <h3 class="font-bold text-slate-900 text-lg">Roteiro de Conteúdo para Slides</h3>
+                    <div id="slidesContainer" class="space-y-3"></div>
+                </div>
+
+                <div id="content-atividades" class="tab-content hidden space-y-4">
+                    <h3 class="font-bold text-slate-900 text-lg">Avaliação Formativa Corrigida</h3>
+                    <div class="border border-slate-200 rounded-xl p-5 bg-slate-50 space-y-3">
+                        <span class="text-xs font-semibold bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">Questão Objetiva</span>
+                        <p class="text-sm font-medium text-slate-800" id="questEnunciado">Carregando enunciado...</p>
+                        <div id="alternativasContainer" class="text-sm text-slate-600 space-y-2 pl-2"></div>
+                        <div class="mt-4 p-3 bg-emerald-50 rounded-lg border border-emerald-100 text-xs">
+                            <span class="font-bold text-emerald-800">Gabarito Oficial: Alternativa <span id="questGabarito"></span></span>
+                            <p class="text-slate-600 mt-1" id="questJustificativa">Justificativa...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-apoio" class="tab-content hidden space-y-4">
+                    <h3 class="font-bold text-slate-900 text-lg">Materiais de Enriquecimento</h3>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div class="border border-slate-200 p-4 rounded-xl bg-white">
+                            <h4 class="font-semibold text-sm text-slate-800 mb-1 flex items-center gap-1">
+                                <i data-lucide="video" class="w-4 h-4 text-red-500"></i> Termo de busca para o YouTube:
+                            </h4>
+                            <p class="text-xs text-slate-600 bg-slate-100 p-2 rounded mt-2 font-mono" id="apoioVideo"></p>
+                        </div>
+                        <div class="border border-slate-200 p-4 rounded-xl bg-white">
+                            <h4 class="font-semibold text-sm text-slate-800 mb-1 flex items-center gap-1">
+                                <i data-lucide="bookmark" class="w-4 h-4 text-indigo-500"></i> Leitura Teórica (Para o Professor):
+                            </h4>
+                            <p class="text-xs text-slate-500 leading-relaxed mt-2" id="apoioLeitura"></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-400 mt-auto">
+        &copy; 2026 AulaPronta AI. Tecnologia a serviço da educação.
+    </footer>
+
+    <script>
+        // Ativa os ícones visuais
+        lucide.createIcons();
+
+        // Monitora o envio do formulário do professor
+        document.getElementById('generatorForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const topic = document.getElementById('topicInput').value;
+            const grade = document.getElementById('gradeSelect').value;
+            
+            const loading = document.getElementById('loadingState');
+            const results = document.getElementById('resultSection');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // Gerenciamento de estado visual: Esconde resultado anterior e mostra loading
+            results.classList.add('hidden');
+            loading.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50');
+            
+            try {
+                // Faz a requisição HTTP POST para a nossa rota do servidor na Vercel
+                const response = await fetch('/api/generate-lesson', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, grade })
+                });
+
+                if (!response.ok) throw new Error('Não foi possível obter resposta da IA.');
+
+                const data = await response.json();
+
+                // Mapeia e renderiza a Aba 1: Plano de Aula
+                document.getElementById('resTitle').innerText = data.aulaTitle;
+                document.getElementById('resBnccCode').innerText = data.bnccCode;
+                document.getElementById('resBnccDesc').innerText = data.bnccDesc;
+                document.getElementById('objConceitual').innerText = data.objetivos.conceitual;
+                document.getElementById('objProcedimental').innerText = data.objetivos.procedimental;
+                document.getElementById('objAtitudinal').innerText = data.objetivos.atitudinal;
+
+                // Mapeia e renderiza a Aba 2: Slides Roteirizados
+                const slidesContainer = document.getElementById('slidesContainer');
+                slidesContainer.innerHTML = '';
+                data.slides.forEach((slide, idx) => {
+                    slidesContainer.innerHTML += `
+                        <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                            <span class="text-xs text-indigo-500 font-bold">SLIDE ${idx + 1}</span>
+                            <h4 class="font-semibold text-slate-800 text-sm mt-0.5">${slide.title}</h4>
+                            <p class="text-xs text-slate-500 mt-2 bg-white p-2.5 rounded border border-slate-100 whitespace-pre-line">${slide.notes}</p>
+                        </div>
+                    `;
+                });
+
+                // Mapeia e renderiza a Aba 3: Exercícios
+                document.getElementById('questEnunciado').innerText = data.atividades.enunciado;
+                document.getElementById('questGabarito').innerText = data.atividades.gabarito;
+                document.getElementById('questJustificativa').innerText = data.atividades.justificativa;
+                
+                const altContainer = document.getElementById('alternativasContainer');
+                altContainer.innerHTML = '';
+                for (const [key, value] of Object.entries(data.atividades.alternativas)) {
+                    const isCorrect = key === data.atividades.gabarito;
+                    altContainer.innerHTML += `
+                        <div class="p-2 rounded ${isCorrect ? 'bg-emerald-50 border border-emerald-100 text-emerald-900 font-medium' : ''}">
+                            <strong>${key})</strong> ${value} ${isCorrect ? '✅' : ''}
+                        </div>
+                    `;
+                }
+
+                // Mapeia e renderiza a Aba 4: Materiais de Apoio
+                document.getElementById('apoioVideo').innerText = `"${data.apoio.videoSugestao}"`;
+                document.getElementById('apoioLeitura').innerText = data.apoio.leituraProfessor;
+
+                // Transiciona a interface para mostrar os resultados
+                loading.classList.add('hidden');
+                results.classList.remove('hidden');
+                switchTab('plano'); // Garante que abre na primeira aba
+
+            } catch (error) {
+                alert('Ocorreu um problema ao estruturar a aula. Verifique se configurou corretamente a chave GEMINI_API_KEY no painel da Vercel.');
+                console.error(error);
+                loading.classList.add('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
+            }
+        });
+
+        // Mecanismo de alternância visual das abas
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(btn => {
+                btn.classList.remove('border-indigo-600', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-slate-500');
+            });
+            
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+            activeBtn.classList.add('border-indigo-600', 'text-indigo-600');
+        }
+    </script>
+</body>
+</html>
